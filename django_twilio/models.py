@@ -49,3 +49,34 @@ class Credential(models.Model):
     account_sid = models.CharField(max_length=34)
 
     auth_token = models.CharField(max_length=32)
+
+
+class Twiml(models.Model):
+    '''
+    A Twiml Model allows you to write Twiml on the fly without
+    having to write any code in your code base.
+    This Twiml can then be accessed through a public URL for use with Twilio.
+
+    :param char name: A name to distinguish this Twiml model
+    :param text twiml: The actual Twiml code block
+    :param bool public: Used to distinguish publicity of the Twiml code
+    :param text url: The publicly routable URL for this Twiml code
+    '''
+
+    def __unicode__(self):
+        return ' '.join(['TwiML -', self.name])
+
+    name = models.CharField(max_length=30)
+
+    twiml = models.TextField(max_length=200)
+
+    public = models.BooleanField(default=False)
+
+    url = models.CharField(max_length=30)
+
+    def generated_url(self):
+        return '/twiml/' + self.url + '/'
+
+    def to_xml(self):
+        encoding = '<?xml version="1.0" encoding="UTF-8"?>'
+        return encoding + self.twiml

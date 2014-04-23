@@ -2,7 +2,7 @@ from types import MethodType
 
 from django.test import TestCase
 from django.contrib.auth.models import User
-from django_twilio.models import Caller, Credential
+from django_twilio.models import Caller, Credential, Twiml
 
 
 class CallerTestCase(TestCase):
@@ -51,3 +51,46 @@ class CredentialTests(TestCase):
         self.assertEquals(self.creds.account_sid, 'XXX')
         self.assertEquals(self.creds.auth_token, 'YYY')
         self.assertEquals(self.creds.user, self.user)
+
+
+class TwimlTests(TestCase):
+
+    def setUp(self):
+        self.twiml_1 = '<Response><Dial>+123456789</Dial></Response>'
+        self.twiml_2 = '<Response><Message>Hello reply</Message></Response>'
+        self.t_1 = Twiml.objects.create(
+            name='call forwarding',
+            twiml=self.twiml_1,
+            url='forwarding',
+            public=True)
+        self.t_2 = Twiml.objects.create(
+            name='sms reply',
+            twiml=self.twiml_2,
+            url='messaging',
+            public=False)
+
+    def test_unicode(self):
+        ''' Assert the unicode looks how we'd like it to '''
+        self.assertEquals(self.t_1.__unicode__(), 'TwiML - call forwarding')
+        self.assertEquals(self.t_2.__unicode__(), 'TwiML - sms reply')
+
+    def test_twiml_fields(self):
+        ''' Assert all fields return how we'd like them to '''
+
+        self.assertEquals(self.t_1.url, 'forwarding')
+        self.assertEquals(self.t_1.public, True)
+        self.assertEquals(self.t_1.twiml, self.twiml_1)
+        self.assertEquals(self.t_2.url, 'messaging')
+        self.assertEquals(self.t_2.public, False)
+        self.assertEquals(self.t_2.twiml, self.twiml_2)
+
+    def test_twiml_functions(self):
+        ''' Assert the model functions work properly '''
+
+        twiml1 = '<?xml version="1.0" encoding="UTF-8"?><Response><Dial>+123456789</Dial></Response>'
+        twiml2 = '<?xml version="1.0" encoding="UTF-8"?><Response><Message>Hello reply</Message></Response>'
+
+        self.assertEquals(self.t_1.generated_url(), '/twiml/forwarding/')
+        self.assertEquals(self.t_2.generated_url(), '/twiml/messaging/')
+        self.assertEquals(self.t_1.to_xml(), twiml1)
+        self.assertEquals(self.t_2.to_xml(), twiml2)

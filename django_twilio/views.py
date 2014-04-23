@@ -1,5 +1,8 @@
+from django.http import Http404
+
 from twilio.twiml import Response
-from django_twilio.decorators import twilio_view
+from .decorators import twilio_view
+from .models import Twiml
 
 
 @twilio_view
@@ -149,3 +152,22 @@ def conference(request, name, muted=None, beep=None,
                         waitUrl=wait_url, waitMethod=wait_method,
                         )
     return r
+
+
+@twilio_view
+def twiml_detail_id(request, twiml_id):
+    t = Twiml.objects.get(pk=twiml_id)
+
+    if not t.exists():
+        raise Http404
+
+    return t.twiml
+
+@twilio_view
+def twiml_detail(request, twiml_name):
+    t = Twiml.objects.filter(url__exact=twiml_name)
+
+    if not t.exists():
+        raise Http404
+
+    return t[0].twiml
